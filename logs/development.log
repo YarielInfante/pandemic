@@ -1,0 +1,3 @@
+[2020-04-12T18:29:52.254] [INFO] pandemic - [p 77308] Listening at port 3000
+[2020-04-12T18:33:22.601] [INFO] pandemic - [0mGET / [32m200[0m 3.321 ms - 12[0m
+[2020-04-12T18:33:32.688] [INFO] pandemic - [0mGET /api/v1/country [32m200[0m 1.669 ms - -[0m
