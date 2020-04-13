@@ -19,10 +19,11 @@ module.exports = {
                     onUpdate: 'cascade',
                     onDelete: 'cascade'
                 },
-                confirmed: Sequelize.DATE,
-                casesPer1M: Sequelize.DATE,
-                recovered: Sequelize.DATE,
-                death: Sequelize.DATE,
+                location: Sequelize.STRING,
+                confirmed: Sequelize.DECIMAL,
+                casesPer1M: Sequelize.DECIMAL,
+                recovered: Sequelize.DECIMAL,
+                death: Sequelize.DECIMAL,
                 createdAt: Sequelize.DATE,
                 updatedAt: Sequelize.DATE
             }
@@ -30,12 +31,6 @@ module.exports = {
     },
 
     down: (queryInterface, Sequelize) => {
-        /*
-          Add reverting commands here.
-          Return a promise to correctly handle asynchronicity.
-
-          Example:
-          return queryInterface.dropTable('users');
-        */
+        return queryInterface.dropTable('case');
     }
 };

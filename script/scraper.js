@@ -1,9 +1,13 @@
 const puppeteer = require('puppeteer');
+const {database, country} = require('../src/database/models');
+const CountryRepository = require('../src/repositories/CountryRepository');
+const CaseRepository = require('../src/repositories/CaseRepository');
+const logger = require('../config/logging/logger');
 
 const waitMilli = 5000;
 
 
-async function run({sourceUrl, save}) {
+async function run(sourceUrl) {
 
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
@@ -13,18 +17,39 @@ async function run({sourceUrl, save}) {
 
     const countriesDataId = await page.evaluate(retrieveCountriesDataId);
 
-    for (let countryDataId of countriesDataId) {
+    for (let i = 0; i < countriesDataId.length; i++) {
+        const countryDataId = countriesDataId[i];
 
-        await page.click('div[class="GycLre"] div[jscontroller="Dk9Hzf"]');
+        const transaction = await country.sequelize.transaction();
 
-        await page.click(`div[class="GycLre"] div[jscontroller="Dk9Hzf"] li[data-id="${countryDataId.dataId}"]`);
+        try {
 
-        await page.waitFor(waitMilli);
+            let countryFound = await CountryRepository.getByName(countryDataId.country, transaction);
+            if (!countryFound) {
+                logger.info('saving');
+                countryFound = await CountryRepository.add({name: countryDataId.country}, transaction);
+            }
 
-        const data = await page.evaluate(retrieveDataFromTable);
+            await page.click('div[class="GycLre"] div[jscontroller="Dk9Hzf"]');
 
-        console.log(`${countryDataId.country} with ${data.length} provinces `);
+            await page.click(`div[class="GycLre"] div[jscontroller="Dk9Hzf"] li[data-id="${countryDataId.dataId}"]`);
 
+            await page.waitFor(waitMilli);
+
+            const data = await page.evaluate(retrieveDataFromTable);
+
+            data.forEach(r => r.countryId = countryFound.id);
+
+            await CaseRepository.addBulk(data);
+
+            logger.info(`${countryDataId.country} with ${data.length} provinces `);
+
+            await transaction.commit();
+
+        } catch (e) {
+            logger.error(e);
+            await transaction.rollback();
+        }
     }
 
 
@@ -41,10 +66,10 @@ function retrieveCountriesDataId() {
             return {
                 country: c.innerText,
                 dataId: c.getAttribute('data-id')
-            }
+            };
         })
         .filter(c => c.country !== '')
-        .filter(c => c.country !== 'Worldwide')
+        .filter(c => c.country !== 'Worldwide');
 }
 
 
@@ -64,19 +89,21 @@ function retrieveDataFromTable() {
 
         countries.push({
             location: country[0].innerText,
-            confirmed: country[1].innerText,
-            casesPer1M: country[2].innerText,
-            recovered: country[3].innerText,
-            death: country[4].innerText
-        })
+            confirmed: country[1].innerText.replace(',', '').replace('—', '0'),
+            casesPer1M: country[2].innerText.replace(',', '').replace('—', '0'),
+            recovered: country[3].innerText.replace(',', '').replace('—', '0'),
+            death: country[4].innerText.replace(',', '').replace('—', '0'),
+        });
     }
 
-    return countries
+    return countries;
 }
 
 
 (async () => {
 
-    await run('https://news.google.com/covid19/map?hl=en-US&gl=US&ceid=US:en');
+    await database.authenticate();
+
+    await run(process.argv[3]);
 
 })();

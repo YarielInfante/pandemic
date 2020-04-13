@@ -1,19 +1,21 @@
 'use strict';
 
 module.exports = function (sequelize, DataTypes) {
-    const Country = sequelize.define('country',
+    const country = sequelize.define('country',
         {
-            id: { type: DataTypes.INTEGER, primaryKey: true },
-            name: { type: DataTypes.STRING }
+            id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+            name: {type: DataTypes.STRING}
         },
+        {
+            tableName: 'country'
+        }
     );
 
     // class methods
-    Country.associate = (models) => {
-        Country.hasMany(models.case);
+    country.associate = (models) => {
+        country.hasMany(models.case);
     };
 
 
-
-    return Country;
+    return country;
 };

@@ -3,13 +3,17 @@
 module.exports = function (sequelize, DataTypes) {
     const Case = sequelize.define('case',
         {
-            id: { type: DataTypes.INTEGER, primaryKey: true },
-            confirmed: { type: DataTypes.INTEGER},
-            casesPer1M: { type: DataTypes.INTEGER},
-            recovered: { type: DataTypes.INTEGER},
-            death: { type: DataTypes.INTEGER},
+            id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+            location: {type: DataTypes.STRING},
+            confirmed: { type: DataTypes.DECIMAL},
+            casesPer1M: { type: DataTypes.DECIMAL},
+            recovered: { type: DataTypes.DECIMAL},
+            death: { type: DataTypes.DECIMAL},
 
         },
+        {
+            tableName: 'case'
+        }
     );
 
     // class methods
